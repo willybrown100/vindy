@@ -1,5 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Client, Account, ID, Avatars, Databases, Query } from 'react-native-appwrite';
+import { Client, Account, ID, Avatars, Databases, Query, Storage, ImageGravity } from 'react-native-appwrite';
 export const appwriteConfig = {
     endpoint:"https://fra.cloud.appwrite.io/v1",
     projectId:process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!,
@@ -21,6 +20,7 @@ export interface signInType{
 export const account= new Account(client)
 const avatars = new Avatars(client)
 export const databases = new Databases(client)
+export const storage = new Storage(client)
 
 // signup session
 export const signUser = async function({email,password,userName}:signInType){
@@ -56,14 +56,10 @@ export interface signInt{
         try {
             const session = await account.createEmailPasswordSession(email,password)
 console.log(session)
- // 2. Get the authenticated user info
+
     const user = await account.get();
 console.log(user)
-    // 3. Get the user ID (this is the one you stored as `accountId` in your user documents)
-    // const userId = user.$id;
-
-    // 4. Save userId to AsyncStorage
-    // await AsyncStorage.setItem('userId', userId);
+  
 
         } catch (error) {
             console.log(error)
@@ -128,7 +124,6 @@ if(!authenticatedUser) throw new Error()
     
   ]
 );
-
       return posts.documents
 
      } catch (error) {
@@ -159,8 +154,85 @@ if(!authenticatedUser) throw new Error()
             const session  = await account.deleteSession("current")
             return session
         } catch (error) {
+               console.log(error)
             throw error
         }
     }
+// export const getFilePreview = async function(fileId:string,type:any){
+// let fileUrl;
+// try {
+//     if(type ==="image"){
+//      fileUrl= await storage.getFilePreview(appwriteConfig.storageId,fileId)
+//     }else if(type=== "video"){
+// fileUrl = storage.getFilePreview(appwriteConfig.storageId, fileId, 2000,2000, ImageGravity.Top,100)
+//     }else{
+//         throw new Error("invalid file type")
+//     }
+//     if (!fileUrl) throw new Error("Could not generate file preview");
+//     return fileUrl
+// } catch (error) {
+//     throw error
+// }
 
-   
+// }
+
+export const getFilePreview = async function(fileId: string, type: any) {
+  let fileUrl;
+  try {
+    if (type === "image") {
+      fileUrl =  storage.getFilePreview(appwriteConfig.storageId, fileId);  //  here
+    } else if (type === "video") {
+      fileUrl =  storage.getFilePreview(
+        appwriteConfig.storageId,
+        fileId,
+        2000,
+        2000,
+        ImageGravity.Top,
+        100
+      );  // await here
+    } else {
+      throw new Error("invalid file type");
+    }
+    if (!fileUrl) throw new Error("Could not generate file preview");
+    return fileUrl;
+  } catch (error) {
+       console.log(error)
+    throw error;
+  }
+};
+
+
+
+    export const uploadFile = async function(file:any,type:string) {
+        if(!file) return
+        const {mimeType,...rest}=file
+      const asset = {mimeType,...rest}
+
+      try {
+        
+        const uploadedFile =await storage.createFile(appwriteConfig.storageId,ID.unique(),asset)
+        const fileUrl = await getFilePreview( uploadedFile.$id,type)
+        return fileUrl
+      } catch (error) {
+          console.log(error)
+        throw error
+      }
+    }
+
+
+   export const createVideo = async function(formData:any){
+try {
+    // returns the thumbnail and videourl to us
+    const [thumbnailUrl,videoUrl]=await Promise.all([
+        uploadFile(formData.thumbnail,"image"),
+        uploadFile(formData.video,"video")
+    ])
+
+    const newPost = await databases.createDocument(appwriteConfig.dataBaseId,appwriteConfig.videoCollectionId,ID.unique(),{title:formData.title,thumbnail:thumbnailUrl,creator:formData.userId,video:videoUrl})
+    return newPost
+} catch (error) {
+       console.log(error)
+    throw  error
+}
+   }
+

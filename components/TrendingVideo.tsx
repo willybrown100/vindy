@@ -43,7 +43,7 @@ interface RenderItemProps {
 
 const RenderItem = ({ activeItem, item }:RenderItemProps) => {
   const [play, setPlay] = useState(false);
-console.log(item.video, play)
+
   return (
     <Animatable.View
       animation={activeItem?.$id === item?.$id ? zoomIn : zoomOut}

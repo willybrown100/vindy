@@ -9,15 +9,12 @@ import EmptyState from '@/components/EmptyState'
 import useGetAllPost from '@/hooks/useGetAllPost'
 import VideoCard from '@/components/VideoCard'
 import useGetLatestPosts from '@/hooks/useGetLatestPosts'
-import { useGlobalContext } from '@/GlobalContextProvider'
 import useGetCurrentUser from '@/hooks/useGetCurrentUser'
-const post  = [{id:1},{id:2}]
+
 const Home = () => {
  const {data:latestPost}=useGetLatestPosts()
- const {data:userData,isPending:isLoading}=useGetCurrentUser()
+ const {data:userData}=useGetCurrentUser()
   const {data,isPending,error,isRefetching,refetch}=useGetAllPost()
-
-
 
 
 if(error)return Alert.alert(error.message)

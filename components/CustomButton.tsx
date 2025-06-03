@@ -3,7 +3,7 @@ import React from 'react'
 
 type CustomButtonProps = {
   title: string;
-  containerStyle:string;
+  containerStyle?:string;
   textStyle?:string;
   handlePress?:()=>void;
   isLoading?:any
